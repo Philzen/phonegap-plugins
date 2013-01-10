@@ -5,7 +5,7 @@ To use this plugin, you need to perform the following steps:
 2. Create a package com.phonegap.plugin.localnotification
 3. Copy the .java files into this package
 4. Fix the import in AlarmReceiver.java around line 67 where R.drawable.ic_launcher is referenced so it matches an icon in your project
-5. Update your res/xml/plugins.xml file with the following line:
+5. Update your res/xml/config.xml file with the following line:
 
         <plugin name="LocalNotification" value="com.phonegap.plugin.localnotification.LocalNotification" />
 
@@ -22,6 +22,8 @@ To use this plugin, you need to perform the following steps:
     
     The first part tells Android to launch the AlarmReceiver class when the alarm is be triggered. This will also work when the application is not running.
 	The second part restores all added alarms upon device reboot (because Android 'forgets' all alarms after a restart).
+
+    Also make sure that `android.permission.VIBRATE` is granted to your app, otherwise it will crash on alarm.
 	
 7. The following piece of code is a minimal example in which you can test the notification:
 
