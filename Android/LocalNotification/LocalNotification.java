@@ -8,10 +8,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
+import org.apache.cordova.api.CallbackContext;
 
-import com.phonegap.api.Plugin;
-import com.phonegap.api.PluginResult;
-
+import org.apache.cordova.api.CordovaPlugin;
+import org.apache.cordova.api.PluginResult;
 /**
  * This plugin utilizes the Android AlarmManager in combination with StatusBar
  * notifications. When a local notification is scheduled the alarm manager takes
@@ -20,7 +20,7 @@ import com.phonegap.api.PluginResult;
  * 
  * @author Daniel van 't Oever
  */
-public class LocalNotification extends Plugin {
+public class LocalNotification extends CordovaPlugin {
 
     public static final String PLUGIN_NAME = "LocalNotification";
 
@@ -31,11 +31,11 @@ public class LocalNotification extends Plugin {
     private AlarmHelper alarm = null;
 
     @Override
-    public PluginResult execute(String action, JSONArray optionsArr, String callBackId) {
-	alarm = new AlarmHelper(this.ctx);
+    public boolean execute(String action, JSONArray optionsArr, CallbackContext callbackContext) {
+	alarm = new AlarmHelper(cordova.getActivity());
 	Log.d(PLUGIN_NAME, "Plugin execute called with action: " + action);
 
-	PluginResult result = null;
+	boolean result = false;
 
 	final AlarmOptions alarmOptions = new AlarmOptions();
 	alarmOptions.parseOptions(optionsArr);
@@ -51,13 +51,19 @@ public class LocalNotification extends Plugin {
 	    final String ticker = alarmOptions.getAlarmTicker();
 
 	    persistAlarm(alarmId, optionsArr);
-	    return this.add(daily, title, subTitle, ticker, alarmId, alarmOptions.getCal());
+	    this.add(daily, title, subTitle, ticker, alarmId, alarmOptions.getCal());
+	    callbackContext.success();
+	    result = true;
 	} else if (action.equalsIgnoreCase("cancel")) {
 	    unpersistAlarm(alarmId);
-	    return this.cancelNotification(alarmId);
+	    this.cancelNotification(alarmId);
+	    callbackContext.success();
+	    result = true;
 	} else if (action.equalsIgnoreCase("cancelall")) {
 	    unpersistAlarmAll();
-	    return this.cancelAllNotifications();
+	    this.cancelAllNotifications();
+	    callbackContext.success();
+	    result = true;
 	}
 
 	return result;
@@ -125,7 +131,7 @@ public class LocalNotification extends Plugin {
 	 * all our alarms to loop through these alarms and unregister them one
 	 * by one.
 	 */
-	final SharedPreferences alarmSettings = this.ctx.getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE);
+	final SharedPreferences alarmSettings = cordova.getActivity().getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE);
 	final boolean result = alarm.cancelAll(alarmSettings);
 
 	if (result) {
@@ -148,7 +154,7 @@ public class LocalNotification extends Plugin {
      * @return true when successfull, otherwise false
      */
     private boolean persistAlarm(String alarmId, JSONArray optionsArr) {
-	final Editor alarmSettingsEditor = this.ctx.getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
+	final Editor alarmSettingsEditor = cordova.getActivity().getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
 
 	alarmSettingsEditor.putString(alarmId, optionsArr.toString());
 
@@ -164,7 +170,7 @@ public class LocalNotification extends Plugin {
      * @return true when successfull, otherwise false
      */
     private boolean unpersistAlarm(String alarmId) {
-	final Editor alarmSettingsEditor = this.ctx.getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
+	final Editor alarmSettingsEditor = cordova.getActivity().getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
 
 	alarmSettingsEditor.remove(alarmId);
 
@@ -177,7 +183,7 @@ public class LocalNotification extends Plugin {
      * @return true when successfull, otherwise false
      */
     private boolean unpersistAlarmAll() {
-	final Editor alarmSettingsEditor = this.ctx.getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
+	final Editor alarmSettingsEditor = cordova.getActivity().getSharedPreferences(PLUGIN_NAME, Context.MODE_PRIVATE).edit();
 
 	alarmSettingsEditor.clear();
 
